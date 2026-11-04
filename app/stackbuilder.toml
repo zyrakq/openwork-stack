@@ -1,0 +1,28 @@
+[paths]
+environments_path = "./environments"
+extensions_dirs = ["extensions"]
+
+[build]
+skip_base_generation = true
+copy_additional_files = true
+env_file_patterns = [".env"]
+extensions = ["model-keys", "repo-sync", "repo-local", "step-ca-trust"]
+
+[build.combos]
+entire = ["model-keys", "repo-sync"]
+entire-trust = ["model-keys", "repo-sync", "step-ca-trust"]
+
+[build.environments]
+available = ["forwarding", "letsencrypt", "step-ca"]
+
+[build.environments.forwarding]
+extensions = []
+combos = ["entire"]
+
+[build.environments.letsencrypt]
+extensions = []
+combos = ["entire"]
+
+[build.environments.step-ca]
+extensions = []
+combos = ["entire-trust"]
