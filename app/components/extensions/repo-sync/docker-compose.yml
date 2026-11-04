@@ -1,0 +1,63 @@
+services:
+  openwork:
+    depends_on:
+      openwork-stack-repo-sync:
+        condition: service_started
+
+  openwork-stack-repo-sync:
+    image: ${REPO_SYNC_IMAGE:-alpine/git:latest}
+    container_name: openwork-stack-repo-sync
+    restart: unless-stopped
+    user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        URL="$${REPO_SYNC_URL}"
+        BRANCH="$${REPO_SYNC_BRANCH:-main}"
+        NAME="$${REPO_SYNC_DIR_NAME:-}"
+        [ -n "$$NAME" ] || NAME="$$(basename "$${URL%.git}")"
+        DEST="/workspace/$$NAME"
+        if [ -n "$${REPO_SYNC_TOKEN:-}" ]; then
+          export GIT_ASKPASS=/tmp/askpass.sh
+          printf '#!/bin/sh\necho "$$REPO_SYNC_TOKEN"\n' > /tmp/askpass.sh
+          chmod 700 /tmp/askpass.sh
+          export GIT_USERNAME="$${REPO_SYNC_USER:-x-access-token}"
+          git config --global credential.username "$$GIT_USERNAME"
+        fi
+        if [ -n "$${REPO_SYNC_SSH_KEY:-}" ]; then
+          printf '%s\n' "$$REPO_SYNC_SSH_KEY" > /tmp/id_sync
+          chmod 600 /tmp/id_sync
+          export GIT_SSH_COMMAND="ssh -i /tmp/id_sync -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/tmp/known_hosts"
+        fi
+        git config --global --add safe.directory '*'
+        while true; do
+          if [ -d "$$DEST/.git" ]; then
+            git -C "$$DEST" fetch --prune origin "$$BRANCH" && git -C "$$DEST" merge --ff-only "origin/$$BRANCH" \
+              || echo "repo-sync: pull failed (local changes?), will retry"
+          else
+            git clone --branch "$$BRANCH" "$$URL" "$$DEST" || echo "repo-sync: clone failed, will retry"
+          fi
+          sleep "$${REPO_SYNC_INTERVAL:-300}"
+        done
+    environment:
+      - REPO_SYNC_URL=${REPO_SYNC_URL:?}
+      - REPO_SYNC_BRANCH=${REPO_SYNC_BRANCH:-main}
+      - REPO_SYNC_DIR_NAME=${REPO_SYNC_DIR_NAME:-}
+      - REPO_SYNC_TOKEN=${REPO_SYNC_TOKEN:-}
+      - REPO_SYNC_USER=${REPO_SYNC_USER:-x-access-token}
+      - REPO_SYNC_SSH_KEY=${REPO_SYNC_SSH_KEY:-}
+      - REPO_SYNC_INTERVAL=${REPO_SYNC_INTERVAL:-300}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - openwork-workspace:/workspace
+    networks:
+      - openwork-network
+
+volumes:
+  openwork-workspace:
+    name: openwork-workspace
+
+networks:
+  openwork-network:
+    name: openwork-network
