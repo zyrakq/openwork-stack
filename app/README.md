@@ -127,6 +127,16 @@ extension menu in [`stackbuilder.toml`](stackbuilder.toml):
   so outbound HTTPS to step-ca-signed services works. Applied to both
   services.
 
+Extension statuses per the catalog in
+[`DEPLOYMENT.md`](../DEPLOYMENT.md) (stack-conventions §20): the four
+extensions above are **implemented**; **available** but not implemented —
+`openwork-inference` gateway, `review` app, `otel-lgtm` observability
+stack; **refused** — the Den platform and its `headless-runner`/`workbot`
+services (Enterprise license), and the mandatory-infra attempts
+PostgreSQL (server persists via embedded SQLite), OIDC (the MIT core
+authenticates with `OPENWORK_TOKEN` only), and S3 (no object-store
+surface in the MIT core).
+
 `sb build` generates one flat directory per environment under `build/`
 (single combo per environment, no combo subdirectories).
 
