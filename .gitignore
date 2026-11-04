@@ -1,0 +1,4 @@
+.env
+.stackbuilder/
+/app/build/*/plugins/
+/app/build/*/*/plugins/
