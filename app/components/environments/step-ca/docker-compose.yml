@@ -1,0 +1,27 @@
+services:
+  openwork:
+    environment:
+      OPENWORK_CORS_ORIGINS: https://${VIRTUAL_HOST}
+      VIRTUAL_PORT: ${OPENWORK_PORT:-8787}
+      VIRTUAL_HOST: ${OPENWORK_API_VHOST}
+      VIRTUAL_PROTO: ${VIRTUAL_PROTO:-http}
+      LETSENCRYPT_HOST: ${OPENWORK_API_VHOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    networks:
+      - step-ca-network
+
+  openwork-web:
+    environment:
+      OPENWORK_PUBLIC_URL: https://${OPENWORK_API_VHOST}
+      VIRTUAL_PORT: 80 # image-internal constant: nginx web container port
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      VIRTUAL_PROTO: ${VIRTUAL_PROTO:-http}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    networks:
+      - step-ca-network
+
+networks:
+  step-ca-network:
+    name: step-ca-network
+    external: true
