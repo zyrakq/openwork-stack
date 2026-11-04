@@ -1,0 +1,111 @@
+---
+x-logging:
+  driver: json-file
+  options:
+    max-size: "${LOG_MAX_SIZE:-10m}"
+    max-file: "${LOG_MAX_FILE:-3}"
+    compress: "${LOG_COMPRESS:-true}"
+services:
+  openwork:
+    container_name: openwork
+    image: "${IMAGE_HOST:-localhost/openwork-host:0.18.4}"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
+        compress: "${LOG_COMPRESS:-true}"
+    environment:
+      OPENWORK_TOKEN: "${OPENWORK_TOKEN:?}"
+      OPENWORK_PORT: "${OPENWORK_PORT:-8787}"
+      OPENWORK_DATA_DIR: /data/openwork-orchestrator
+      OPENWORK_SIDECAR_DIR: /data/sidecars
+      OPENWORK_MANAGE_OPENCODE: "1"
+      OPENWORK_APPROVAL_MODE: "${OPENWORK_APPROVAL_MODE:-manual}"
+      OPENWORK_CORS_ORIGINS: "${OPENWORK_CORS_ORIGINS:-'*'}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+    volumes:
+      - "openwork-data:/data"
+      - "openwork-workspace:/workspace"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "curl -sf http://127.0.0.1:$${OPENWORK_PORT:-8787}/health || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - openwork-network
+    ports:
+      - "${OPENWORK_PUBLISH_PORT:-8787}:${OPENWORK_PORT:-8787}"
+    depends_on:
+      openwork-stack-repo-sync:
+        condition: service_started
+  openwork-web:
+    container_name: openwork-web
+    image: "${IMAGE_WEB:-localhost/openwork-web:0.18.4}"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
+        compress: "${LOG_COMPRESS:-true}"
+    depends_on:
+      openwork:
+        condition: service_started
+    environment:
+      OPENWORK_PUBLIC_URL: "${OPENWORK_PUBLIC_URL:-http://localhost:${OPENWORK_PUBLISH_PORT:-8787}}"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "wget -q -O /dev/null http://127.0.0.1:80/ || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - openwork-network
+    ports:
+      - "${OPENWORK_WEB_PUBLISH_PORT:-8080}:80"
+  openwork-stack-repo-sync:
+    image: "${REPO_SYNC_IMAGE:-alpine/git:latest}"
+    container_name: openwork-stack-repo-sync
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILE:-3}"
+        compress: "${LOG_COMPRESS:-true}"
+    user: root
+    entrypoint:
+      - /bin/sh
+      - "-c"
+    command:
+      - "set -eu\nURL=\"$${REPO_SYNC_URL}\"\nBRANCH=\"$${REPO_SYNC_BRANCH:-main}\"\nNAME=\"$${REPO_SYNC_DIR_NAME:-}\"\n[ -n \"$$NAME\" ] || NAME=\"$$(basename \"$${URL%.git}\")\"\nDEST=\"/workspace/$$NAME\"\nif [ -n \"$${REPO_SYNC_TOKEN:-}\" ]; then\n  export GIT_ASKPASS=/tmp/askpass.sh\n  printf '#!/bin/sh\\necho \"$$REPO_SYNC_TOKEN\"\\n' > /tmp/askpass.sh\n  chmod 700 /tmp/askpass.sh\n  export GIT_USERNAME=\"$${REPO_SYNC_USER:-x-access-token}\"\n  git config --global credential.username \"$$GIT_USERNAME\"\nfi\nif [ -n \"$${REPO_SYNC_SSH_KEY:-}\" ]; then\n  printf '%s\\n' \"$$REPO_SYNC_SSH_KEY\" > /tmp/id_sync\n  chmod 600 /tmp/id_sync\n  export GIT_SSH_COMMAND=\"ssh -i /tmp/id_sync -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/tmp/known_hosts\"\nfi\ngit config --global --add safe.directory '*'\nwhile true; do\n  if [ -d \"$$DEST/.git\" ]; then\n    git -C \"$$DEST\" fetch --prune origin \"$$BRANCH\" && git -C \"$$DEST\" merge --ff-only \"origin/$$BRANCH\" \\\n      || echo \"repo-sync: pull failed (local changes?), will retry\"\n  else\n    git clone --branch \"$$BRANCH\" \"$$URL\" \"$$DEST\" || echo \"repo-sync: clone failed, will retry\"\n  fi\n  sleep \"$${REPO_SYNC_INTERVAL:-300}\"\ndone\n"
+    environment:
+      - "REPO_SYNC_URL=${REPO_SYNC_URL:?}"
+      - "REPO_SYNC_BRANCH=${REPO_SYNC_BRANCH:-main}"
+      - "REPO_SYNC_DIR_NAME=${REPO_SYNC_DIR_NAME:-}"
+      - "REPO_SYNC_TOKEN=${REPO_SYNC_TOKEN:-}"
+      - "REPO_SYNC_USER=${REPO_SYNC_USER:-x-access-token}"
+      - "REPO_SYNC_SSH_KEY=${REPO_SYNC_SSH_KEY:-}"
+      - "REPO_SYNC_INTERVAL=${REPO_SYNC_INTERVAL:-300}"
+      - "TZ=${TZ:-UTC}"
+    volumes:
+      - "openwork-workspace:/workspace"
+    networks:
+      - openwork-network
+volumes:
+  openwork-data:
+    name: openwork-data
+  openwork-workspace:
+    name: openwork-workspace
+networks:
+  openwork-network:
+    name: openwork-network

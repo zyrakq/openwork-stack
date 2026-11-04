@@ -4,6 +4,8 @@ extensions_dirs = ["extensions"]
 
 [build]
 skip_base_generation = true
+# rust yaml merger — the host has no yq binary (and host package managers are off-limits)
+yaml_merger = "rust"
 copy_additional_files = true
 env_file_patterns = [".env"]
 extensions = ["model-keys", "repo-sync", "repo-local", "step-ca-trust"]
