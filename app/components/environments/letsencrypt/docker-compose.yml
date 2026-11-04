@@ -1,0 +1,27 @@
+services:
+  openwork-web:
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      VIRTUAL_PORT: "80"        # nginx:alpine listens on 80 (image constant)
+      VIRTUAL_PROTO: ${VIRTUAL_PROTO:-http}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      OPENWORK_PUBLIC_URL: https://${OPENWORK_API_VHOST}
+    networks:
+      - letsencrypt-network
+
+  openwork:
+    environment:
+      VIRTUAL_HOST: ${OPENWORK_API_VHOST}
+      VIRTUAL_PORT: ${OPENWORK_PORT:-8787}
+      VIRTUAL_PROTO: ${VIRTUAL_PROTO:-http}
+      LETSENCRYPT_HOST: ${OPENWORK_API_VHOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      OPENWORK_CORS_ORIGINS: https://${VIRTUAL_HOST}
+    networks:
+      - letsencrypt-network
+
+networks:
+  letsencrypt-network:
+    name: letsencrypt-network
+    external: true
