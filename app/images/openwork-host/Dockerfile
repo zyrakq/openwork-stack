@@ -41,6 +41,8 @@ RUN set -eux; \
   rm -rf "$tmpdir"
 
 # Persistent directories (mount volumes here).
+RUN mkdir -p /data/openwork-orchestrator /data/sidecars /workspace
+
 ENV OPENWORK_PORT=8787
 ENV OPENWORK_DATA_DIR=/data/openwork-orchestrator
 ENV OPENWORK_SIDECAR_DIR=/data/sidecars
@@ -55,4 +57,8 @@ VOLUME ["/workspace", "/data"]
 # Defaults:
 # - OpenWork server is published intentionally via --host 0.0.0.0
 # - OpenCode is managed by openwork-server and stays internal
-CMD ["/bin/sh", "-lc", "plugin_dir=\"$(npm root -g)/openwork-server/dist/opencode-plugins\"; test -d \"$plugin_dir\"; export OPENWORK_MANAGE_OPENCODE=1 OPENWORK_OPENCODE_BIN=/usr/local/bin/opencode OPENWORK_EXTENSIONS_PLUGIN_DIR=\"$plugin_dir\"; exec openwork-server --workspace \"${OPENWORK_WORKSPACE:-/workspace}\" --host 0.0.0.0 --port \"${OPENWORK_PORT:-8787}\" --cors \"${OPENWORK_CORS_ORIGINS:-*}\" --approval \"${OPENWORK_APPROVAL_MODE:-manual}\""]
+# Note: the 0.18.4 npm tarball ships only the compiled Bun binary
+# (dist/bin/openwork-server); the OpenCode plugins are embedded in it, so
+# OPENWORK_EXTENSIONS_PLUGIN_DIR must NOT be set (upstream's packaging
+# Dockerfile still references dist/opencode-plugins, which no longer exists).
+CMD ["/bin/sh", "-lc", "exec openwork-server --workspace \"${OPENWORK_WORKSPACE:-/workspace}\" --host 0.0.0.0 --port \"${OPENWORK_PORT:-8787}\" --cors \"${OPENWORK_CORS_ORIGINS:-*}\" --approval \"${OPENWORK_APPROVAL_MODE:-manual}\""]
