@@ -1,3 +1,10 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: ${LOG_MAX_SIZE:-10m}
+    max-file: ${LOG_MAX_FILE:-3}
+    compress: ${LOG_COMPRESS:-true}
+
 services:
   openwork:
     depends_on:
@@ -8,6 +15,7 @@ services:
     image: ${REPO_SYNC_IMAGE:-alpine/git:latest}
     container_name: openwork-stack-repo-sync
     restart: unless-stopped
+    logging: *default-logging
     user: root
     entrypoint: ["/bin/sh", "-c"]
     command:
