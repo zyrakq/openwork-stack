@@ -1,0 +1,67 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: ${LOG_MAX_SIZE:-10m}
+    max-file: ${LOG_MAX_FILE:-3}
+    compress: ${LOG_COMPRESS:-true}
+
+services:
+  openwork:
+    container_name: openwork
+    image: ${IMAGE_HOST:-localhost/openwork-host:0.18.4}
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      OPENWORK_TOKEN: ${OPENWORK_TOKEN:?}
+      OPENWORK_PORT: ${OPENWORK_PORT:-8787}
+      OPENWORK_DATA_DIR: /data/openwork-orchestrator
+      OPENWORK_SIDECAR_DIR: /data/sidecars
+      OPENWORK_MANAGE_OPENCODE: "1"
+      OPENWORK_APPROVAL_MODE: ${OPENWORK_APPROVAL_MODE:-manual}
+      OPENWORK_CORS_ORIGINS: ${OPENWORK_CORS_ORIGINS:-'*'}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - openwork-data:/data
+      - openwork-workspace:/workspace
+    healthcheck:
+      # /health returns 200 unauthenticated on the built image (probed).
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:$${OPENWORK_PORT:-8787}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - openwork-network
+
+  openwork-web:
+    container_name: openwork-web
+    image: ${IMAGE_WEB:-localhost/openwork-web:0.18.4}
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      openwork:
+        condition: service_started
+    environment:
+      # Overlays set the real public URL; base leaves it empty.
+      OPENWORK_PUBLIC_URL: ${OPENWORK_PUBLIC_URL:-}
+    # Port 80 is the nginx container's internal listen port (image constant).
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - openwork-network
+
+volumes:
+  openwork-data:
+    name: openwork-data
+  openwork-workspace:
+    name: openwork-workspace
+
+networks:
+  openwork-network:
+    name: openwork-network
