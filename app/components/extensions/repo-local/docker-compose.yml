@@ -1,0 +1,5 @@
+services:
+  openwork:
+    volumes: !override
+      - ${REPOS_PATH:?}:/workspace
+      - openwork-data:/data
