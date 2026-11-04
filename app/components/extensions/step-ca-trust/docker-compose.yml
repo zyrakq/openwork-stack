@@ -1,0 +1,72 @@
+services:
+  openwork:
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        SRC="$${STEP_CA_ROOT_CA_SRC:-/step-ca-root/root_ca.crt}"
+        DST="$${STEP_CA_ROOT_CA_FILE:-/usr/local/share/ca-certificates/step-ca-root.crt}"
+        WAIT="$${STEP_CA_WAIT_TIMEOUT:-60}"
+        i=0
+        while [ ! -s "$$SRC" ]; do
+          i=$$((i+1))
+          [ "$$i" -gt "$$WAIT" ] && { echo "step-ca-trust: $$SRC not found after $${WAIT}s" >&2; exit 1; }
+          sleep 1
+        done
+        mkdir -p "$$(dirname "$$DST")"
+        cp "$$SRC" "$$DST"
+        chmod 644 "$$DST"
+        update-ca-certificates
+        export NODE_EXTRA_CA_CERTS="$$SRC"
+        exec "$$@"
+    environment:
+      STEP_CA_ROOT_CA_SRC: ${STEP_CA_ROOT_CA_SRC:-/step-ca-root/root_ca.crt}
+      STEP_CA_ROOT_CA_FILE: ${STEP_CA_ROOT_CA_FILE:-/usr/local/share/ca-certificates/step-ca-root.crt}
+      STEP_CA_WAIT_TIMEOUT: ${STEP_CA_WAIT_TIMEOUT:-60}
+    volumes:
+      - type: volume
+        source: step-ca-data
+        target: /step-ca-root
+        read_only: true
+        volume:
+          subpath: certs
+
+  openwork-web:
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        SRC="$${STEP_CA_ROOT_CA_SRC:-/step-ca-root/root_ca.crt}"
+        DST="$${STEP_CA_ROOT_CA_FILE:-/usr/local/share/ca-certificates/step-ca-root.crt}"
+        WAIT="$${STEP_CA_WAIT_TIMEOUT:-60}"
+        i=0
+        while [ ! -s "$$SRC" ]; do
+          i=$$((i+1))
+          [ "$$i" -gt "$$WAIT" ] && { echo "step-ca-trust: $$SRC not found after $${WAIT}s" >&2; exit 1; }
+          sleep 1
+        done
+        mkdir -p "$$(dirname "$$DST")"
+        cp "$$SRC" "$$DST"
+        chmod 644 "$$DST"
+        update-ca-certificates
+        export NODE_EXTRA_CA_CERTS="$$SRC"
+        exec /entrypoint.sh "$$@"
+    environment:
+      STEP_CA_ROOT_CA_SRC: ${STEP_CA_ROOT_CA_SRC:-/step-ca-root/root_ca.crt}
+      STEP_CA_ROOT_CA_FILE: ${STEP_CA_ROOT_CA_FILE:-/usr/local/share/ca-certificates/step-ca-root.crt}
+      STEP_CA_WAIT_TIMEOUT: ${STEP_CA_WAIT_TIMEOUT:-60}
+    volumes:
+      - type: volume
+        source: step-ca-data
+        target: /step-ca-root
+        read_only: true
+        volume:
+          subpath: certs
+
+volumes:
+  step-ca-data:
+    external: true
