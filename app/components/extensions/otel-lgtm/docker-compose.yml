@@ -1,0 +1,51 @@
+# otel-lgtm extension — observability backend (modeled on upstream
+# packaging/docker/docker-compose.otel-lgtm.yml @ ae67215d).
+# All-in-one grafana/otel-lgtm image: OTLP collector + Grafana + Tempo + Loki
+# + Prometheus + Pyroscope. The openwork server exports OTLP/HTTP protobuf to
+# the collector; traces/metrics/logs are queryable through the Grafana API.
+services:
+  openwork:
+    depends_on:
+      openwork-lgtm:
+        condition: service_healthy
+    environment:
+      # Upstream supports OTLP/HTTP protobuf only.
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://openwork-lgtm:4318}
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://openwork-lgtm:4318/v1/traces}
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:-http://openwork-lgtm:4318/v1/metrics}
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ${OTEL_EXPORTER_OTLP_LOGS_ENDPOINT:-http://openwork-lgtm:4318/v1/logs}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+
+  openwork-lgtm:
+    image: ${LGTM_IMAGE:-docker.io/grafana/otel-lgtm:0.11.16}
+    container_name: openwork-lgtm
+    restart: unless-stopped
+    ports:
+      - "${OPENWORK_GRAFANA_PUBLISH_PORT:-3000}:3000"
+    healthcheck:
+      # Same readiness probes as upstream: Grafana, Loki, Tempo, Prometheus,
+      # and the OTLP collector health endpoint.
+      test:
+        - CMD-SHELL
+        - >
+          curl -fsS http://localhost:3000/api/health >/dev/null &&
+          curl -fsS http://localhost:3100/ready >/dev/null &&
+          curl -fsS http://localhost:3200/ready >/dev/null &&
+          curl -fsS http://localhost:9090/-/ready >/dev/null &&
+          curl -fsS http://localhost:13133/ready >/dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - openwork-lgtm-data:/data
+    networks:
+      - openwork-network
+
+volumes:
+  openwork-lgtm-data:
+    name: openwork-lgtm-data
+
+networks:
+  openwork-network:
+    name: openwork-network
