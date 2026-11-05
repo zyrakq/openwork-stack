@@ -97,7 +97,11 @@ default).
   narrowed to the UI origin, and `OPENWORK_PUBLIC_URL` points at the API
   vhost
 - **step-ca**: joins `step-ca-network`; same two-vhost wiring with the
-  step-ca stack
+  step-ca stack. **Gated 2026-11-05** (step-ca variant): step-ca-issued
+  certs valid for both vhosts, web UI over HTTPS 200, `/health` 200
+  unauth, `/status`+`/whoami` 401→200 with token, `GET /workspaces` 200,
+  state+certs survive `docker compose restart`, teardown clean. The
+  letsencrypt overlay remains available, un-gated
 
 ### Extensions
 

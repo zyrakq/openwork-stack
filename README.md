@@ -44,7 +44,10 @@ docker compose up -d
 
 `sb build` produces one flat directory per environment — `build/forwarding/`,
 `build/letsencrypt/`, and `build/step-ca/` (the entire-trust combo) — pick the
-one matching your deployment.
+one matching your deployment. The step-ca environment is gated
+(2026-11-05): valid step-ca-issued certs for both vhosts, HTTPS endpoints
+verified, restart persistence and clean teardown; letsencrypt remains
+available, un-gated.
 
 See [`app/README.md`](app/README.md) for the full runbook.
 
