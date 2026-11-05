@@ -23,7 +23,6 @@ services:
       OPENWORK_SIDECAR_DIR: /data/sidecars
       OPENWORK_MANAGE_OPENCODE: "1"
       OPENWORK_APPROVAL_MODE: "${OPENWORK_APPROVAL_MODE:-manual}"
-      OPENWORK_CORS_ORIGINS: "https://${VIRTUAL_HOST}"
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
       OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
@@ -32,6 +31,7 @@ services:
       VIRTUAL_PROTO: "${VIRTUAL_PROTO:-http}"
       LETSENCRYPT_HOST: "${OPENWORK_API_VHOST}"
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
+      OPENWORK_CORS_ORIGINS: "https://${VIRTUAL_HOST}"
     volumes:
       - "openwork-data:/data"
       - "openwork-workspace:/workspace"

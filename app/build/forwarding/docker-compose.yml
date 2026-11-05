@@ -23,10 +23,10 @@ services:
       OPENWORK_SIDECAR_DIR: /data/sidecars
       OPENWORK_MANAGE_OPENCODE: "1"
       OPENWORK_APPROVAL_MODE: "${OPENWORK_APPROVAL_MODE:-manual}"
-      OPENWORK_CORS_ORIGINS: "${OPENWORK_CORS_ORIGINS:-'*'}"
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
       OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENWORK_CORS_ORIGINS: "${OPENWORK_CORS_ORIGINS:-*}"
     volumes:
       - "openwork-data:/data"
       - "openwork-workspace:/workspace"

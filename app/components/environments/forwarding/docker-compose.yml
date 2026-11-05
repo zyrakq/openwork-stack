@@ -2,6 +2,9 @@ services:
   openwork:
     ports:
       - "${OPENWORK_PUBLISH_PORT:-8787}:${OPENWORK_PORT:-8787}"
+    environment:
+      # CORS default for direct port access; override when served behind a proxy
+      OPENWORK_CORS_ORIGINS: ${OPENWORK_CORS_ORIGINS:-*}
   openwork-web:
     ports:
       - "${OPENWORK_WEB_PUBLISH_PORT:-8080}:80" # 80 is the nginx container port baked into the openwork-web image
