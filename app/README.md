@@ -127,10 +127,21 @@ extension menu in [`stackbuilder.toml`](stackbuilder.toml):
   so outbound HTTPS to step-ca-signed services works. Applied to both
   services.
 
+- **review**: standalone reviewer UI (`openwork-review`, source-built
+  Next.js image `localhost/openwork-review:0.18.4`, port
+  `REVIEW_PUBLISH_PORT` default 3011). Verified upstream-first: it does
+  **not** call the `openwork` service — it reads published evidence
+  reports from its own `openwork-review-data` volume
+  (`OPENWORK_REVIEW_LOCAL_DIR=/data/reviews`) and launches sandbox
+  previews via Freestyle/Daytona provider keys (`FREESTYLE_API_KEY`,
+  `DAYTONA_API_KEY`, preferred provider `REVIEW_EVIDENCE_PROVIDER`).
+  Without provider keys it serves reports and marks launch controls
+  unavailable (key-free operation). Combo: `entire-review`.
+
 Extension statuses per the catalog in
-[`DEPLOYMENT.md`](../DEPLOYMENT.md) (stack-conventions §20): the four
+[`DEPLOYMENT.md`](../DEPLOYMENT.md) (stack-conventions §20): the five
 extensions above are **implemented**; **available** but not implemented —
-`openwork-inference` gateway, `review` app, `otel-lgtm` observability
+`openwork-inference` gateway, `otel-lgtm` observability
 stack; **refused** — the Den platform and its `headless-runner`/`workbot`
 services (Enterprise license), and the mandatory-infra attempts
 PostgreSQL (server persists via embedded SQLite), OIDC (the MIT core
