@@ -1,0 +1,32 @@
+# Review app fragment — standalone Next.js reviewer UI (apps/review).
+# Reads published review reports from its own volume (OPENWORK_REVIEW_LOCAL_DIR,
+# upstream packages/review storage.ts); it does not call the openwork server.
+services:
+  openwork-review:
+    image: ${REVIEW_IMAGE:-localhost/openwork-review:0.18.4}
+    container_name: openwork-review
+    restart: unless-stopped
+    ports:
+      - "${REVIEW_PUBLISH_PORT:-3011}:${REVIEW_PORT:-3011}"
+    environment:
+      REVIEW_PORT: ${REVIEW_PORT:-3011}
+      # Self-hosted report storage (required upstream; Vercel Blob is the alternative)
+      OPENWORK_REVIEW_LOCAL_DIR: ${REVIEW_LOCAL_DIR:-/data/reviews}
+      # Preferred preview provider (freestyle | daytona); unset = freestyle.
+      # Without provider credentials the UI serves reports and marks launches unavailable.
+      OPENWORK_EVIDENCE_PROVIDER: ${REVIEW_EVIDENCE_PROVIDER:-}
+      FREESTYLE_API_KEY: ${FREESTYLE_API_KEY:-}
+      DAYTONA_API_KEY: ${DAYTONA_API_KEY:-}
+      OPENWORK_DAYTONA_EVIDENCE_REGION: ${REVIEW_DAYTONA_REGION:-us-west-3}
+    volumes:
+      - openwork-review-data:${REVIEW_LOCAL_DIR:-/data/reviews}
+    networks:
+      - openwork-network
+
+volumes:
+  openwork-review-data:
+    name: openwork-review-data
+
+networks:
+  openwork-network:
+    name: openwork-network

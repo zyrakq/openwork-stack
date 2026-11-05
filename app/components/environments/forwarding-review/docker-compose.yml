@@ -1,0 +1,9 @@
+services:
+  openwork:
+    ports:
+      - "${OPENWORK_PUBLISH_PORT:-8787}:${OPENWORK_PORT:-8787}"
+  openwork-web:
+    ports:
+      - "${OPENWORK_WEB_PUBLISH_PORT:-8080}:80" # 80 is the nginx container port baked into the openwork-web image
+    environment:
+      OPENWORK_PUBLIC_URL: ${OPENWORK_PUBLIC_URL:-http://localhost:${OPENWORK_PUBLISH_PORT:-8787}}

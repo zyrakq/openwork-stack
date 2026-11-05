@@ -8,18 +8,23 @@ skip_base_generation = true
 yaml_merger = "rust"
 copy_additional_files = true
 env_file_patterns = [".env"]
-extensions = ["model-keys", "repo-sync", "repo-local", "step-ca-trust"]
+extensions = ["model-keys", "repo-sync", "repo-local", "step-ca-trust", "review"]
 
 [build.combos]
 entire = ["model-keys", "repo-sync"]
 entire-trust = ["model-keys", "repo-sync", "step-ca-trust"]
+entire-review = ["model-keys", "repo-sync", "review"]
 
 [build.environments]
-available = ["forwarding", "letsencrypt", "step-ca"]
+available = ["forwarding", "letsencrypt", "step-ca", "forwarding-review"]
 
 [build.environments.forwarding]
 extensions = []
 combos = ["entire"]
+
+[build.environments.forwarding-review]
+extensions = []
+combos = ["entire-review"]
 
 [build.environments.letsencrypt]
 extensions = []
