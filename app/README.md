@@ -138,11 +138,24 @@ extension menu in [`stackbuilder.toml`](stackbuilder.toml):
   Without provider keys it serves reports and marks launch controls
   unavailable (key-free operation). Combo: `entire-review`.
 
+- **otel-lgtm** observability backend — all-in-one `grafana/otel-lgtm`
+  image (OTLP collector + Grafana + Tempo + Loki + Prometheus +
+  Pyroscope), modeled on upstream
+  `packaging/docker/docker-compose.otel-lgtm.yml` @ `ae67215d`. The
+  fragment wires OTLP/HTTP-protobuf exporter env onto the `openwork`
+  service (defaults pointing at the collector over `openwork-network`)
+  and publishes only the Grafana port (`OPENWORK_GRAFANA_PUBLISH_PORT`,
+  default 3000; admin/admin). Data persists in the `openwork-lgtm-data`
+  volume. Combo: `entire-otel`. Note: upstream `apps/server` has no OTel
+  instrumentation at this pin — the OTEL env is consumed by the
+  in-process opencode runtime, so Tempo/Loki show service.name
+  `opencode`.
+
 Extension statuses per the catalog in
-[`DEPLOYMENT.md`](../DEPLOYMENT.md) (stack-conventions §20): the five
+[`DEPLOYMENT.md`](../DEPLOYMENT.md) (stack-conventions §20): the six
 extensions above are **implemented**; **available** but not implemented —
-`openwork-inference` gateway, `otel-lgtm` observability
-stack; **refused** — the Den platform and its `headless-runner`/`workbot`
+`openwork-inference` gateway; **refused** — the Den platform and its
+`headless-runner`/`workbot`
 services (Enterprise license), and the mandatory-infra attempts
 PostgreSQL (server persists via embedded SQLite), OIDC (the MIT core
 authenticates with `OPENWORK_TOKEN` only), and S3 (no object-store
