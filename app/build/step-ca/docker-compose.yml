@@ -62,7 +62,7 @@ services:
     entrypoint:
       - /bin/sh
       - "-c"
-      - "set -eu\nSRC=\"$${STEP_CA_ROOT_CA_SRC:-/step-ca-root/root_ca.crt}\"\nDST=\"$${STEP_CA_ROOT_CA_FILE:-/usr/local/share/ca-certificates/step-ca-root.crt}\"\nWAIT=\"$${STEP_CA_WAIT_TIMEOUT:-60}\"\ni=0\nwhile [ ! -s \"$$SRC\" ]; do\n  i=$$((i+1))\n  [ \"$$i\" -gt \"$$WAIT\" ] && { echo \"step-ca-trust: $$SRC not found after $${WAIT}s\" >&2; exit 1; }\n  sleep 1\ndone\nmkdir -p \"$$(dirname \"$$DST\")\"\ncp \"$$SRC\" \"$$DST\"\nchmod 644 \"$$DST\"\nupdate-ca-certificates\nexport NODE_EXTRA_CA_CERTS=\"$$SRC\"\nexec \"$$@\"\n"
+      - "set -eu\nSRC=\"$${STEP_CA_ROOT_CA_SRC:-/step-ca-root/root_ca.crt}\"\nDST=\"$${STEP_CA_ROOT_CA_FILE:-/usr/local/share/ca-certificates/step-ca-root.crt}\"\nWAIT=\"$${STEP_CA_WAIT_TIMEOUT:-60}\"\ni=0\nwhile [ ! -s \"$$SRC\" ]; do\n  i=$$((i+1))\n  [ \"$$i\" -gt \"$$WAIT\" ] && { echo \"step-ca-trust: $$SRC not found after $${WAIT}s\" >&2; exit 1; }\n  sleep 1\ndone\nmkdir -p \"$$(dirname \"$$DST\")\"\ncp \"$$SRC\" \"$$DST\"\nchmod 644 \"$$DST\"\nupdate-ca-certificates\nexport NODE_EXTRA_CA_CERTS=\"$$SRC\"\nexec /entrypoint.sh \"$$@\"\n"
   openwork-web:
     container_name: openwork-web
     image: "${IMAGE_WEB:-localhost/openwork-web:0.18.4}"

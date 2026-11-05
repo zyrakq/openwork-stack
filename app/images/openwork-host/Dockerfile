@@ -61,4 +61,14 @@ VOLUME ["/workspace", "/data"]
 # (dist/bin/openwork-server); the OpenCode plugins are embedded in it, so
 # OPENWORK_EXTENSIONS_PLUGIN_DIR must NOT be set (upstream's packaging
 # Dockerfile still references dist/opencode-plugins, which no longer exists).
-CMD ["/bin/sh", "-lc", "exec openwork-server --workspace \"${OPENWORK_WORKSPACE:-/workspace}\" --host 0.0.0.0 --port \"${OPENWORK_PORT:-8787}\" --cors \"${OPENWORK_CORS_ORIGINS:-*}\" --approval \"${OPENWORK_APPROVAL_MODE:-manual}\""]
+# ENTRYPOINT via /entrypoint.sh (not CMD): the step-ca-trust extension
+# overrides the compose entrypoint with a trust wrapper that ends
+# `exec /entrypoint.sh "$@"` — the image must bake its real command into
+# /entrypoint.sh (same pattern as the openwork-web image). With CMD the
+# wrapper would exec an empty argv and exit 0 in a restart loop.
+RUN printf '%s\n' \
+  '#!/bin/sh' \
+  'set -eu' \
+  'exec openwork-server --workspace "${OPENWORK_WORKSPACE:-/workspace}" --host 0.0.0.0 --port "${OPENWORK_PORT:-8787}" --cors "${OPENWORK_CORS_ORIGINS:-*}" --approval "${OPENWORK_APPROVAL_MODE:-manual}"' \
+  > /entrypoint.sh && chmod 0755 /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

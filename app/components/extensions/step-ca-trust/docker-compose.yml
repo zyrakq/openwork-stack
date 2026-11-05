@@ -20,7 +20,7 @@ services:
         chmod 644 "$$DST"
         update-ca-certificates
         export NODE_EXTRA_CA_CERTS="$$SRC"
-        exec "$$@"
+        exec /entrypoint.sh "$$@"
     environment:
       STEP_CA_ROOT_CA_SRC: ${STEP_CA_ROOT_CA_SRC:-/step-ca-root/root_ca.crt}
       STEP_CA_ROOT_CA_FILE: ${STEP_CA_ROOT_CA_FILE:-/usr/local/share/ca-certificates/step-ca-root.crt}
